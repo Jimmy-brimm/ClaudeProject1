@@ -1,0 +1,16 @@
+{
+  "name": "concept-design-studio",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Describe an invention, get a concept sheet, diagram, image prompt, calculators and a rough 3D preview.",
+  "scripts": {
+    "start": "node server/server.mjs",
+    "test": "node --test test/*.test.js"
+  },
+  "engines": {
+    "node": ">=20.12"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.3.0"
+  }
+}

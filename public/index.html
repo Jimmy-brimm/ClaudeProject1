@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Concept Bench</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Describe an invention and get a concept sheet, a module diagram, an image prompt, sanity-check calculators and a rough 3D preview.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-name">Concept Bench</span>
+    </div>
+    <div class="project-controls">
+      <label class="visually-hidden" for="project-select">Project</label>
+      <select id="project-select"></select>
+      <button type="button" class="btn" id="btn-new">New</button>
+      <button type="button" class="btn" id="btn-undo" disabled>Undo</button>
+      <details class="menu">
+        <summary class="btn">More</summary>
+        <div class="menu-panel">
+          <button type="button" id="btn-example">Load power bank example</button>
+          <button type="button" id="btn-export">Copy project as JSON</button>
+          <button type="button" id="btn-import">Paste project JSON…</button>
+          <button type="button" id="btn-delete" class="danger">Delete this project</button>
+        </div>
+      </details>
+    </div>
+  </div>
+</header>
+
+<main class="layout">
+  <!-- Left: what you type or say -->
+  <section class="pane pane-input" aria-label="Describe the invention">
+    <div class="tabs" role="tablist" aria-label="Input">
+      <button type="button" role="tab" id="tab-describe" aria-controls="panel-describe" aria-selected="true">Describe</button>
+      <button type="button" role="tab" id="tab-chat" aria-controls="panel-chat" aria-selected="false">Chat</button>
+    </div>
+
+    <form id="panel-describe" role="tabpanel" aria-labelledby="tab-describe" class="form" autocomplete="off">
+      <div class="field">
+        <label for="f-name">Name</label>
+        <input id="f-name" data-bind="name" type="text">
+      </div>
+      <div class="field">
+        <label for="f-summary">In one or two sentences</label>
+        <textarea id="f-summary" data-bind="summary" rows="2"></textarea>
+      </div>
+      <div class="field">
+        <label for="f-goal">Goal</label>
+        <textarea id="f-goal" data-bind="goal" rows="3"></textarea>
+      </div>
+      <div class="field">
+        <label for="f-approach">Approach</label>
+        <textarea id="f-approach" data-bind="approach" rows="2"></textarea>
+      </div>
+      <div class="field">
+        <label for="f-status">Status note</label>
+        <input id="f-status" data-bind="status" type="text" placeholder="e.g. Concept only, not building yet">
+      </div>
+
+      <fieldset class="group">
+        <legend>Modules</legend>
+        <div id="modules"></div>
+        <button type="button" class="btn btn-add" id="btn-add-module">Add module</button>
+      </fieldset>
+
+      <div class="field">
+        <label for="f-questions">Open questions <span class="hint">one per line</span></label>
+        <textarea id="f-questions" data-bind="openQuestions" data-list rows="4"></textarea>
+      </div>
+      <div class="field">
+        <label for="f-later">Later experiments <span class="hint">one per line</span></label>
+        <textarea id="f-later" data-bind="laterExperiments" data-list rows="3"></textarea>
+      </div>
+
+      <fieldset class="group">
+        <legend>Image prompt</legend>
+        <div class="field">
+          <label for="f-img-subject">What is shown</label>
+          <input id="f-img-subject" data-bind="image.subject" type="text">
+        </div>
+        <div class="field">
+          <label for="f-img-body">Main unit looks like</label>
+          <input id="f-img-body" data-bind="image.body" type="text">
+        </div>
+        <div class="field">
+          <label for="f-img-extras">Extra details</label>
+          <input id="f-img-extras" data-bind="image.extras" type="text">
+        </div>
+        <div class="field">
+          <label for="f-img-style">Background and lighting</label>
+          <input id="f-img-style" data-bind="image.style" type="text">
+        </div>
+        <p class="hint">Each module's "In the render" text is added too: inside modules appear in the cutaway, separate parts beside it.</p>
+      </fieldset>
+
+      <fieldset class="group">
+        <legend>3D shape</legend>
+        <div class="row-3">
+          <div class="field">
+            <label for="f-shape-body">Body</label>
+            <select id="f-shape-body" data-bind="shape.body">
+              <option value="roundedBox">Rounded box</option>
+              <option value="box">Box</option>
+              <option value="cylinder">Cylinder</option>
+              <option value="capsule">Capsule</option>
+              <option value="sphere">Sphere</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-shape-color">Colour</label>
+            <input id="f-shape-color" data-bind="shape.color" type="color">
+          </div>
+          <div class="field">
+            <label for="f-shape-radius">Corner mm</label>
+            <input id="f-shape-radius" data-bind="shape.radius" data-num type="number" min="0" step="1">
+          </div>
+        </div>
+        <div class="row-3">
+          <div class="field">
+            <label for="f-shape-w">Width mm</label>
+            <input id="f-shape-w" data-bind="shape.w" data-num type="number" min="1" step="1">
+          </div>
+          <div class="field">
+            <label for="f-shape-h">Height mm</label>
+            <input id="f-shape-h" data-bind="shape.h" data-num type="number" min="1" step="1">
+          </div>
+          <div class="field">
+            <label for="f-shape-d">Depth mm</label>
+            <input id="f-shape-d" data-bind="shape.d" data-num type="number" min="1" step="1">
+          </div>
+        </div>
+        <details class="advanced">
+          <summary>Extra parts (JSON)</summary>
+          <p class="hint">Simple shapes around the body. <code>shape</code>: box, roundedBox, cylinder [radius, length], torus [radius, tube], sphere [radius]. Positions in mm from the body centre, rotations in degrees.</p>
+          <textarea id="f-shape-parts" rows="8" spellcheck="false" class="mono"></textarea>
+          <p class="field-error" id="parts-error" hidden></p>
+        </details>
+      </fieldset>
+    </form>
+
+    <div id="panel-chat" role="tabpanel" aria-labelledby="tab-chat" class="chat" hidden>
+      <div class="chat-status" id="chat-status"></div>
+      <ol class="chat-log" id="chat-log" aria-live="polite"></ol>
+      <form class="chat-form" id="chat-form">
+        <label class="visually-hidden" for="chat-input">Message</label>
+        <textarea id="chat-input" rows="3" placeholder="e.g. Swap the walking generator for a hand crank and size it for 2 W"></textarea>
+        <div class="chat-actions">
+          <button type="button" class="btn" id="chat-mic" hidden aria-pressed="false">Speak</button>
+          <span class="chat-cost" id="chat-cost"></span>
+          <button type="submit" class="btn btn-primary" id="chat-send">Send</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- Right: what comes out -->
+  <section class="pane pane-output" aria-label="Results">
+    <div class="tabs" role="tablist" aria-label="Results">
+      <button type="button" role="tab" id="tab-sheet" aria-controls="out-sheet" aria-selected="true">Concept sheet</button>
+      <button type="button" role="tab" id="tab-diagram" aria-controls="out-diagram" aria-selected="false">Diagram</button>
+      <button type="button" role="tab" id="tab-prompt" aria-controls="out-prompt" aria-selected="false">Image prompt</button>
+      <button type="button" role="tab" id="tab-calc" aria-controls="out-calc" aria-selected="false">Numbers</button>
+      <button type="button" role="tab" id="tab-3d" aria-controls="out-3d" aria-selected="false">3D</button>
+    </div>
+
+    <article id="out-sheet" role="tabpanel" aria-labelledby="tab-sheet" class="sheet"></article>
+
+    <div id="out-diagram" role="tabpanel" aria-labelledby="tab-diagram" hidden>
+      <div class="out-toolbar">
+        <p class="hint">Boxes come from your modules, arrows from "Connects to". The most connected module sits in the middle.</p>
+        <button type="button" class="btn" id="btn-copy-svg">Copy SVG</button>
+      </div>
+      <div class="diagram-wrap" id="diagram"></div>
+    </div>
+
+    <div id="out-prompt" role="tabpanel" aria-labelledby="tab-prompt" hidden>
+      <div class="prompt-card">
+        <p class="eyebrow">For Gemini or any image tool</p>
+        <p class="prompt-text" id="prompt-text"></p>
+        <div class="out-toolbar">
+          <span class="hint" id="prompt-count"></span>
+          <button type="button" class="btn btn-primary" id="btn-copy-prompt">Copy prompt</button>
+        </div>
+      </div>
+      <p class="hint">Built from the image fields and each module's "In the render" text. Edit those on the left and the prompt follows.</p>
+    </div>
+
+    <div id="out-calc" role="tabpanel" aria-labelledby="tab-calc" hidden>
+      <p class="hint calc-intro">Simple formula estimates, not a physics simulation. Change any input and everything recalculates. The formula sits under each result.</p>
+      <div class="calc-grid" id="calc"></div>
+    </div>
+
+    <div id="out-3d" role="tabpanel" aria-labelledby="tab-3d" hidden>
+      <div class="viewer" id="viewer"></div>
+      <div class="out-toolbar">
+        <p class="hint">Rough shape only. Drag to turn it. Size and colour live under "3D shape" on the left.</p>
+        <button type="button" class="btn" id="btn-spin" aria-pressed="true">Pause spin</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<dialog id="json-dialog" class="dialog">
+  <form method="dialog" class="dialog-body" id="json-form">
+    <h2 id="json-title">Project JSON</h2>
+    <label class="visually-hidden" for="json-text">Project JSON</label>
+    <textarea id="json-text" rows="14" spellcheck="false" class="mono"></textarea>
+    <p class="field-error" id="json-error" hidden></p>
+    <div class="dialog-actions">
+      <button type="button" class="btn" id="json-close">Close</button>
+      <button type="button" class="btn btn-primary" id="json-apply">Load as new project</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="vendor/three.min.js"></script>
+<script src="js/calc.js"></script>
+<script src="js/model.js"></script>
+<script src="js/diagram.js"></script>
+<script src="js/preview3d.js"></script>
+<script src="js/chat.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
